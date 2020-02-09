@@ -6,46 +6,44 @@ const io = require('socket.io')(server);
 io.on('connection', (socket) => {
   // when a user creates a new room
   console.log('socket id', socket.id);
-  socket.on('new room', (data) => {
+  socket.on('new room', async () => {
     const roomId = utils.generateRandomString();
     console.log('new room id', roomId);
+    await leaveAllRooms(socket);
     socket.join(roomId, () => {
       console.log('joined rooms', Object.keys(socket.rooms));
-      socket.emit('room joined', { roomId, numberOfMembers: 1 });
-      // on client: save the roomId and red color if number of members is one or blue if two, in local storate
-      // navigate to disabled game page with the URL shown
+      socket.emit('room join', { roomId, numberOfMembers: 1 });
     });
   });
 
-  // when a user joins a room, by typing the roomId and clicking a button
-  socket.on('join room', (data) => {
+  socket.on('join room', async (data) => {
     const { roomId } = data;
-    let numberOfMembers = io.sockets.adapter.rooms[roomId].length;
+    let numberOfMembers = 0;
+    if (io.sockets.adapter.rooms[roomId]) {
+      numberOfMembers = io.sockets.adapter.rooms[roomId].length;
+    }
     console.log('number of members 1', numberOfMembers);
     if (numberOfMembers < 2) {
+      await leaveAllRooms(socket);
       socket.join(roomId, () => {
-        numberOfMembers = io.sockets.adapter.rooms[roomId].length;
-        socket.emit('room joined', { roomId, numberOfMembers });
-      // on client: save the roomId and red color if number of members is one or blue if two, in local storate
-      // navigate to disabled game page with the URL shown
+        if (io.sockets.adapter.rooms[roomId]) {
+          numberOfMembers = io.sockets.adapter.rooms[roomId].length;
+        }
+        socket.emit('room join', { roomId, numberOfMembers });
         console.log('number of members 2', numberOfMembers);
-        if (numberOfMembers === 2) { // it was 1 and now 2
+        if (numberOfMembers === 2) {
           // TODO: update analytics in a database
           io.to(roomId).emit('game start');
-          // on client: enable the view and start game
         }
       });
     } else {
-      socket.emit('custom error', { message: 'this room is full' });
-      // client should show this error
+      socket.emit('custom error', { message: 'This room is full' });
     }
   });
 
-  // when a user makes a new move
   socket.on('new move', (data) => {
-    const { roomId, row, col } = data;
-    io.to(roomId).emit('new move', { row, col });
-    // on client: update the view and check for a winner
+    const { roomId, playerColor, row, col } = data;
+    io.to(roomId).emit('new move', { row, col, playerColor });
   });
 
   // when a user wins
@@ -69,16 +67,42 @@ io.on('connection', (socket) => {
     // on client: clear the local storage and navigate to the home page
   });
 
+  socket.on('user leave', async () => {
+    console.log('user left the game');
+    const rooms = Object.keys(socket.rooms);
+    console.log('and his rooms was', rooms);
+    for (let i = 0; i < rooms.length; i++) {
+      socket.to(rooms[i]).emit('user leave');
+    }
+    await leaveAllRooms(socket);
+    console.log('and after removing him from rooms', Object.keys(socket.rooms));
+  });
+
   socket.on('disconnecting', () => {
     const rooms = Object.keys(socket.rooms);
     console.log('disconnecting client socket id', socket.id);
     console.log('disconnecting client rooms', rooms);
-    for (let i = 1; i < rooms.length; i++) {
-      socket.to(rooms[1]).emit('user leave');
-      // on client: inform the user that the other player left and reset, disable the game
+    for (let i = 0; i < rooms.length; i++) {
+      socket.to(rooms[i]).emit('user leave');
     }
   });
 });
+
+function leaveAllRooms(socket) {
+  return new Promise((resolve, reject) => {
+    const rooms = Object.keys(socket.rooms).slice(1);
+    if (!rooms.length) { resolve(); }
+    let leftRoomsCnt = 0;
+    for (let room of rooms) {
+      socket.leave(room, () => {
+        leftRoomsCnt++;
+        if (leftRoomsCnt === rooms.length) {
+          resolve();
+        }
+      });
+    }
+  });
+}
 
 server.listen(3000, function () {
   console.log('listening on port 3000');
