@@ -1,7 +1,23 @@
-const app = require('express')();
+const initFirebase = require('./initFirebase');
+const admin = require("firebase-admin");
+const express = require('express');
+const app = express();
 const utils = require('./utils.js');
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
+const compression = require("compression");
+
+initFirebase();
+
+const db = admin.database();
+
+app.use(compression());
+
+app.use(express.static('public'));
+
+app.all('*', function (req, res) {
+  res.status(200).sendFile('/', { root: 'public' });
+});
 
 io.on('connection', (socket) => {
   console.log('socket id', socket.id);
@@ -28,8 +44,8 @@ io.on('connection', (socket) => {
         }
         socket.emit('room join', { roomId, numberOfMembers });
         if (numberOfMembers === 2) {
-          // TODO: update analytics in a database
           io.to(roomId).emit('game start');
+          updateAnalytics();
         }
       });
     } else {
@@ -87,6 +103,11 @@ function leaveAllRooms(socket) {
       });
     }
   });
+}
+
+function updateAnalytics() {
+  const analyticsRef = db.ref('/analytics/numberOfPlayedGames');
+  analyticsRef.transaction(currentValue => (currentValue || 0) + 1);
 }
 
 server.listen(3000, function () {
