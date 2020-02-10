@@ -4,7 +4,6 @@ const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 
 io.on('connection', (socket) => {
-  // when a user creates a new room
   console.log('socket id', socket.id);
   socket.on('new room', async () => {
     const roomId = utils.generateRandomString();
