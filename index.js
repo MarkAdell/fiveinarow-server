@@ -25,6 +25,7 @@ io.on('connection', (socket) => {
     const roomId = utils.generateRandomString();
     console.log('new room id', roomId);
     await leaveAllRooms(socket);
+    console.log(Object.keys(socket.rooms));
     socket.join(roomId, () => {
       socket.emit('room join', { roomId, numberOfMembers: 1 });
     });
@@ -91,7 +92,7 @@ io.on('connection', (socket) => {
 
 function leaveAllRooms(socket) {
   return new Promise((resolve, reject) => {
-    const rooms = Object.keys(socket.rooms).slice(1);
+    const rooms = Object.keys(socket.rooms);
     if (!rooms.length) { resolve(); }
     let leftRoomsCnt = 0;
     for (let room of rooms) {
