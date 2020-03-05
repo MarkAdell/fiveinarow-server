@@ -20,10 +20,10 @@ app.all('*', function (req, res) {
 });
 
 io.on('connection', (socket) => {
-  console.log('socket id', socket.id);
+  console.log('new client socket id:', socket.id);
   socket.on('new room', async () => {
     const roomId = utils.generateRandomString();
-    console.log('new room id', roomId);
+    console.log('new room id:', roomId);
     await leaveAllRooms(socket);
     console.log(Object.keys(socket.rooms));
     socket.join(roomId, () => {
@@ -60,8 +60,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('player win', (data) => {
-    const { roomId, winningPlayer } = data;
-    io.to(roomId).emit('player win', { winningPlayer });
+    const { roomId, winningPlayer, score } = data;
+    io.to(roomId).emit('player win', { winningPlayer, score });
   });
 
   socket.on('new game', (data) => {
