@@ -2,6 +2,7 @@ const initFirebase = require('./initFirebase');
 const admin = require("firebase-admin");
 const express = require('express');
 const app = express();
+const cors = require('cors')
 const utils = require('./utils.js');
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
@@ -11,6 +12,7 @@ initFirebase();
 
 const db = admin.database();
 
+app.use(cors())
 app.use(compression());
 
 app.use(express.static('public'));
