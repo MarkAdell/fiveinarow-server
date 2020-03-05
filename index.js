@@ -109,8 +109,10 @@ function leaveAllRooms(socket) {
 }
 
 function updateAnalytics() {
-  const analyticsRef = db.ref('/analytics/numberOfPlayedGames');
-  analyticsRef.transaction(currentValue => (currentValue || 0) + 1);
+  const playedGamesRef = db.ref('/analytics/numberOfPlayedGames');
+  const createdRoomsRef = db.ref('/analytics/numberOfCreatedRooms');
+  playedGamesRef.transaction(currentValue => (currentValue || 0) + 1);
+  createdRoomsRef.transaction(currentValue => (currentValue || 0) + 1);
 }
 
 server.listen(3000, function () {
