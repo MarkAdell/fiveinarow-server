@@ -24,6 +24,7 @@ app.all('*', function (req, res) {
 io.on('connection', (socket) => {
   console.log('new client socket id:', socket.id);
   socket.on('new room', async () => {
+    updateNumberOfCreatedRooms();
     const roomId = utils.generateRandomString();
     console.log('new room id:', roomId);
     await leaveAllRooms(socket);
@@ -48,7 +49,7 @@ io.on('connection', (socket) => {
         socket.emit('room join', { roomId, numberOfMembers });
         if (numberOfMembers === 2) {
           io.to(roomId).emit('game start');
-          updateAnalytics();
+          updateNumberOfPlayedGames();
         }
       });
     } else {
@@ -108,10 +109,13 @@ function leaveAllRooms(socket) {
   });
 }
 
-function updateAnalytics() {
+function updateNumberOfPlayedGames() {
   const playedGamesRef = db.ref('/analytics/numberOfPlayedGames');
-  const createdRoomsRef = db.ref('/analytics/numberOfCreatedRooms');
   playedGamesRef.transaction(currentValue => (currentValue || 0) + 1);
+}
+
+function updateNumberOfCreatedRooms() {
+  const createdRoomsRef = db.ref('/analytics/numberOfCreatedRooms');
   createdRoomsRef.transaction(currentValue => (currentValue || 0) + 1);
 }
 
