@@ -2,6 +2,7 @@ const initFirebase = require('./initFirebase');
 const admin = require("firebase-admin");
 const express = require('express');
 const app = express();
+const cors = require('cors')
 const utils = require('./utils.js');
 const server = require('http').createServer(app);
 const io = require('socket.io')(server);
@@ -11,6 +12,7 @@ initFirebase();
 
 const db = admin.database();
 
+app.use(cors())
 app.use(compression());
 
 app.use(express.static('public'));
@@ -20,10 +22,10 @@ app.all('*', function (req, res) {
 });
 
 io.on('connection', (socket) => {
-  console.log('socket id', socket.id);
+  console.log('new client socket id:', socket.id);
   socket.on('new room', async () => {
     const roomId = utils.generateRandomString();
-    console.log('new room id', roomId);
+    console.log('new room id:', roomId);
     await leaveAllRooms(socket);
     console.log(Object.keys(socket.rooms));
     socket.join(roomId, () => {
@@ -60,8 +62,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('player win', (data) => {
-    const { roomId, winningPlayer } = data;
-    io.to(roomId).emit('player win', { winningPlayer });
+    const { roomId, winningPlayer, score } = data;
+    io.to(roomId).emit('player win', { winningPlayer, score });
   });
 
   socket.on('new game', (data) => {
