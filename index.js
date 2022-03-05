@@ -1,3 +1,4 @@
+require('dotenv').config();
 const initFirebase = require('./initFirebase');
 const admin = require("firebase-admin");
 const express = require('express');
@@ -116,6 +117,6 @@ function updateNumberOfCreatedRooms() {
   createdRoomsRef.transaction(currentValue => (currentValue || 0) + 1);
 }
 
-server.listen(3000, function () {
-  console.log('listening on port 3000');
+server.listen(process.env.PORT, function () {
+  console.log(`listening on port ${process.env.PORT}`);
 });
