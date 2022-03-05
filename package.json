@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "pm2 start index.js",
-    "restart": "pm2 restart index.js"
+    "start": "node index.js",
   },
   "repository": {
     "type": "git",
@@ -22,7 +21,7 @@
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "firebase-admin": "^8.9.2",
+    "firebase-admin": "^10.0.2",
     "socket.io": "^2.3.0"
   }
 }

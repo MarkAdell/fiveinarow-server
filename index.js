@@ -2,10 +2,10 @@ const initFirebase = require('./initFirebase');
 const admin = require("firebase-admin");
 const express = require('express');
 const app = express();
-const cors = require('cors')
+const cors = require('cors');
 const utils = require('./utils.js');
 const server = require('http').createServer(app);
-const io = require('socket.io')(server);
+const io = require('socket.io')(server, { origins: '*:*'});
 const compression = require("compression");
 
 initFirebase();
@@ -22,13 +22,10 @@ app.all('*', function (req, res) {
 });
 
 io.on('connection', (socket) => {
-  console.log('new client socket id:', socket.id);
   socket.on('new room', async () => {
     updateNumberOfCreatedRooms();
     const roomId = utils.generateRandomString();
-    console.log('new room id:', roomId);
     await leaveAllRooms(socket);
-    console.log(Object.keys(socket.rooms));
     socket.join(roomId, () => {
       socket.emit('room join', { roomId, numberOfMembers: 1 });
     });
