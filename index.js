@@ -1,6 +1,4 @@
 require('dotenv').config();
-const initFirebase = require('./initFirebase');
-const admin = require("firebase-admin");
 const express = require('express');
 const app = express();
 const cors = require('cors');
@@ -8,10 +6,6 @@ const utils = require('./utils.js');
 const server = require('http').createServer(app);
 const io = require('socket.io')(server, { origins: '*:*'});
 const compression = require("compression");
-
-initFirebase();
-
-const db = admin.database();
 
 app.use(cors())
 app.use(compression());
@@ -24,7 +18,6 @@ app.all('*', function (req, res) {
 
 io.on('connection', (socket) => {
   socket.on('new room', async () => {
-    updateNumberOfCreatedRooms();
     const roomId = utils.generateRandomString();
     await leaveAllRooms(socket);
     socket.join(roomId, () => {
@@ -47,7 +40,6 @@ io.on('connection', (socket) => {
         socket.emit('room join', { roomId, numberOfMembers });
         if (numberOfMembers === 2) {
           io.to(roomId).emit('game start');
-          updateNumberOfPlayedGames();
         }
       });
     } else {
@@ -105,16 +97,6 @@ function leaveAllRooms(socket) {
       });
     }
   });
-}
-
-function updateNumberOfPlayedGames() {
-  const playedGamesRef = db.ref('/analytics/numberOfPlayedGames');
-  playedGamesRef.transaction(currentValue => (currentValue || 0) + 1);
-}
-
-function updateNumberOfCreatedRooms() {
-  const createdRoomsRef = db.ref('/analytics/numberOfCreatedRooms');
-  createdRoomsRef.transaction(currentValue => (currentValue || 0) + 1);
 }
 
 server.listen(process.env.PORT, function () {

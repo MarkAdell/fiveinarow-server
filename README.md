@@ -1,3 +1,3 @@
 # fiveinarow-server
 
-Enjoy [playing](https://fivedotsinarow.herokuapp.com/) with your friends!
+Enjoy [playing](https://fivedotsinarow.onrender.com/) with your friends!
